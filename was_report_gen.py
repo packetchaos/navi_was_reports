@@ -1,10 +1,8 @@
 from flask import Flask, Response, render_template, request
-from dbconfig import insert_apps, create_apps_table, new_db_connection
+from dbconfig import insert_apps, create_apps_table, new_db_connection, drop_tables
 from api_wrapper import request_data
 import dateutil.parser
-import datetime
-import json
-import pprint
+
 
 app = Flask(__name__)
 
@@ -23,10 +21,7 @@ def download_data(uuid):
     database = r"was.db"
     app_conn = new_db_connection(database)
     app_conn.execute('pragma journal_mode=wal;')
-
     with app_conn:
-        create_apps_table()
-
         apps_table_list = []
         report = request_data('GET', '/was/v2/scans/{}/report'.format(uuid))
         scan_metadata = request_data('GET', '/was/v2/scans/{}'.format(uuid))
@@ -67,8 +62,6 @@ def download_data(uuid):
             medium = []
             low = []
             info = []
-            name = report['config']['name']
-
             critical_summary = []
             high_summary = []
             medium_summary = []
@@ -82,6 +75,7 @@ def download_data(uuid):
                 target = report['scan']['target']
             except KeyError:
                 target = report['config']['settings']['target']
+
             # Count for-loop
             plugin_list = []
             for finding in report['findings']:
@@ -152,6 +146,11 @@ def download_data(uuid):
 
 
 def grab_scans():
+    database = r"was.db"
+    app_conn = new_db_connection(database)
+    app_conn.execute('pragma journal_mode=wal;')
+
+    drop_tables(app_conn, 'apps')
     create_apps_table()
 
     scan_summaries = []
@@ -238,8 +237,6 @@ def scan_report():
         # Count for-loop
         plugin_list = []
         instance_dict = {}
-        plugin_dict = {}
-        finding_dict = {}
         for finding in report['findings']:
             plugin_list.append(finding['plugin_id'])
             instance_dict.setdefault(finding['plugin_id'], []).append(finding['uri'])
@@ -250,7 +247,6 @@ def scan_report():
                     if '2017' in xref['xref_value']:
                         owasp_clean = str(xref['xref_value']).split('-')[1]
                         owasp_list.append(owasp_clean)
-        #print(instance_dict)
 
         def occurances(number, number_list):
             return number_list.count(number)
@@ -308,7 +304,7 @@ def scan_report():
                 info.append(plugin_id)
                 if vuln_list not in info_summary:
                     info_summary.append(vuln_list)
-        #pprint.pprint(plugin_info_list)
+
         return render_template('was_report.html', scan_name=scan_name, scan_completed_time=scan_completed_time,
                                requests_made=requests_made, pages_audited=pages_audited, pages_crawled=pages_crawled,
                                critical=len(critical), high=len(high), target=target, low=len(low), medium=len(medium),
@@ -364,8 +360,7 @@ def grab_was_consolidated_data(config_id):
         cur = conn.cursor()
         if config_id:
             cur.execute("SELECT critical_count, high_count, medium_count, low_count, info_count, pages_audited,"
-                        "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps where config_id='{}';".format(
-                config_id))
+                        "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps where config_id='{}';".format(config_id))
         else:
             cur.execute("SELECT critical_count, high_count, medium_count, low_count, info_count, pages_audited,"
                         "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps;")
@@ -431,7 +426,7 @@ def grab_was_consolidated_data(config_id):
 
 
 def sql_test():
-    database = r"was.db"
+    database = r"navi.db"
     conn = new_db_connection(database)
     owasp_list = []
     values_per_key = {}
@@ -463,12 +458,8 @@ def sql_test():
 
 
 if __name__ == '__main__':
-    #sql_test()
-    print("\n I'm Downloading all of your web app scans now into a local db called was.db")
-    print("This will take a few minutes.\n Once complete I will spin up a webserver for you to print reports from.\n")
+    print("\nI'm Downloading all of your web app scans now into a local db called was.db\n")
+    print("\nThis will take a few minutes.\nOnce complete I will spin up a webserver for you to print reports from.\n")
     grab_scans()
     app.run(host="0.0.0.0", port=5004)
-    # main()
-    # download_data('d9c9f3e1-273b-412a-94f0-9ada8f44d89a')
-    # sql_explorer()
-    #scan_report()
+
