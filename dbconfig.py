@@ -1,5 +1,4 @@
 import sqlite3
-import click
 from sqlite3 import Error
 
 
@@ -10,8 +9,18 @@ def new_db_connection(db_file):
         # A database file will be created if one doesn't exist
         conn = sqlite3.connect(db_file, timeout=5.0)
     except Error as E:
-        click.echo(E)
+        print(E)
     return conn
+
+
+def drop_tables(conn, table):
+    try:
+        drop_table = '''DROP TABLE {}'''.format(table)
+        cur = conn.cursor()
+        cur.execute('pragma journal_mode=wal;')
+        cur.execute(drop_table)
+    except Error:
+        pass
 
 
 def create_table(conn, table_information):
@@ -20,7 +29,7 @@ def create_table(conn, table_information):
         c.execute('pragma journal_mode=wal;')
         c.execute(table_information)
     except Error as e:
-        click.echo(e)
+        print(e)
 
 
 def create_apps_table():
