@@ -13,6 +13,17 @@ def new_db_connection(db_file):
     return conn
 
 
+def create_keys_table():
+    # Create Tables
+    database = r"navi.db"
+    key_conn = new_db_connection(database)
+    key_table = """CREATE TABLE IF NOT EXISTS keys (
+                            access_key text,
+                            secret_key text
+                            );"""
+    create_table(key_conn, key_table)
+
+
 def drop_tables(conn, table):
     try:
         drop_table = '''DROP TABLE {}'''.format(table)
@@ -33,7 +44,7 @@ def create_table(conn, table_information):
 
 
 def create_apps_table():
-    database = r"was.db"
+    database = r"navi.db"
     app_conn = new_db_connection(database)
     create_apps = """CREATE TABLE IF NOT EXISTS apps (
                             name text,
