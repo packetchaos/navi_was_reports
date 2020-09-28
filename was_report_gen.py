@@ -1,12 +1,56 @@
 from flask import Flask, Response, render_template, request
-from dbconfig import insert_apps, create_apps_table, new_db_connection
-from api_wrapper import request_data
+from dbconfig import insert_apps, create_apps_table, new_db_connection, drop_tables, create_keys_table
+import requests
 import dateutil.parser
-import datetime
-import json
-import pprint
+import sys
+import time
+
 
 app = Flask(__name__)
+
+
+def grab_headers():
+    header_db = r"navi.db"
+    h_conn = new_db_connection(header_db)
+    with h_conn:
+        h_cur = h_conn.cursor()
+        h_cur.execute("SELECT * from keys;")
+        rows = h_cur.fetchall()
+        for row in rows:
+            access_key = row[0]
+            secret_key = row[1]
+    return {'Content-type': 'application/json', 'user-agent': 'Navi-WAS-Reporter', 'X-ApiKeys': 'accessKey=' + access_key + ';secretKey=' + secret_key}
+
+
+def request_data(method, url_mod, **kwargs):
+
+    # set the Base URL
+    url = "https://cloud.tenable.com"
+
+    # check for params and set to None if not found
+    try:
+        params = kwargs['params']
+    except KeyError:
+        params = None
+
+    # check for a payload and set to None if not found
+    try:
+        payload = kwargs['payload']
+    except KeyError:
+        payload = None
+
+    # Retry the request three times
+    for x in range(1, 3):
+        try:
+            r = requests.request(method, url + url_mod, headers=grab_headers(), params=params, json=payload, verify=True)
+            if r.status_code == 200:
+                return r.json()
+            else:
+                print("Something went wrong...Don't be trying to hack me now {}".format(r))
+                break
+        except ConnectionError:
+            print("Check your connection...You got a connection error. Retying")
+            continue
 
 
 def plugin_parser(plugin_output):
@@ -20,13 +64,10 @@ def plugin_parser(plugin_output):
 
 
 def download_data(uuid):
-    database = r"was.db"
+    database = r"navi.db"
     app_conn = new_db_connection(database)
     app_conn.execute('pragma journal_mode=wal;')
-
     with app_conn:
-        create_apps_table()
-
         apps_table_list = []
         report = request_data('GET', '/was/v2/scans/{}/report'.format(uuid))
         scan_metadata = request_data('GET', '/was/v2/scans/{}'.format(uuid))
@@ -67,8 +108,6 @@ def download_data(uuid):
             medium = []
             low = []
             info = []
-            name = report['config']['name']
-
             critical_summary = []
             high_summary = []
             medium_summary = []
@@ -82,6 +121,7 @@ def download_data(uuid):
                 target = report['scan']['target']
             except KeyError:
                 target = report['config']['settings']['target']
+
             # Count for-loop
             plugin_list = []
             for finding in report['findings']:
@@ -152,6 +192,11 @@ def download_data(uuid):
 
 
 def grab_scans():
+    database = r"navi.db"
+    app_conn = new_db_connection(database)
+    app_conn.execute('pragma journal_mode=wal;')
+
+    drop_tables(app_conn, 'apps')
     create_apps_table()
 
     scan_summaries = []
@@ -238,8 +283,6 @@ def scan_report():
         # Count for-loop
         plugin_list = []
         instance_dict = {}
-        plugin_dict = {}
-        finding_dict = {}
         for finding in report['findings']:
             plugin_list.append(finding['plugin_id'])
             instance_dict.setdefault(finding['plugin_id'], []).append(finding['uri'])
@@ -250,7 +293,6 @@ def scan_report():
                     if '2017' in xref['xref_value']:
                         owasp_clean = str(xref['xref_value']).split('-')[1]
                         owasp_list.append(owasp_clean)
-        #print(instance_dict)
 
         def occurances(number, number_list):
             return number_list.count(number)
@@ -308,7 +350,7 @@ def scan_report():
                 info.append(plugin_id)
                 if vuln_list not in info_summary:
                     info_summary.append(vuln_list)
-        #pprint.pprint(plugin_info_list)
+
         return render_template('was_report.html', scan_name=scan_name, scan_completed_time=scan_completed_time,
                                requests_made=requests_made, pages_audited=pages_audited, pages_crawled=pages_crawled,
                                critical=len(critical), high=len(high), target=target, low=len(low), medium=len(medium),
@@ -357,15 +399,14 @@ def consolidated():
 
 
 def grab_was_consolidated_data(config_id):
-    database = r"was.db"
+    database = r"navi.db"
     conn = new_db_connection(database)
     app_data = {}
     with conn:
         cur = conn.cursor()
         if config_id:
             cur.execute("SELECT critical_count, high_count, medium_count, low_count, info_count, pages_audited,"
-                        "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps where config_id='{}';".format(
-                config_id))
+                        "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps where config_id='{}';".format(config_id))
         else:
             cur.execute("SELECT critical_count, high_count, medium_count, low_count, info_count, pages_audited,"
                         "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps;")
@@ -430,45 +471,22 @@ def grab_was_consolidated_data(config_id):
         return critical_total, high_total, medium_total, low_total, info_total, audit_total, crawled_total, request_total, app_data, value_dict, technology_list
 
 
-def sql_test():
-    database = r"was.db"
-    conn = new_db_connection(database)
-    owasp_list = []
-    values_per_key = {}
-    value_dict = {}
-    with conn:
-        cur = conn.cursor()
-        cur.execute("SELECT owasp from apps where config_id='65880201-1eff-3db3-b656-a3bf6163357f';")
-        data = cur.fetchall()
-        for x in data:
-            owasp_dict = eval(x[0])
-            owasp_list.append(owasp_dict)
-        #print(owasp_list)
-        for d in owasp_list:
-            #print(d)
-            print()
-            for k, v in d.items():
-                ##value_list = []
-                #values_per_key[k] = value_list.append(v)
-                # Group each value with its corresponding Key
-                values_per_key.setdefault(k, []).append(v)
-
-                for x, y in values_per_key.items():
-                    f = 0
-                    for z in y:
-                        f = f + z
-                        value_dict[x] = f
-            #print(values_per_key)
-        print(value_dict)
+def run_app():
+    app.run(host="0.0.0.0", port=5004)
 
 
 if __name__ == '__main__':
-    #sql_test()
-    print("\n I'm Downloading all of your web app scans now into a local db called was.db")
-    print("This will take a few minutes.\n Once complete I will spin up a webserver for you to print reports from.\n")
+    print("\n This is going to take a few minutes.\n Downloading all of your completed scans\n")
+    create_keys_table()
+    init_access_key = sys.argv[1]
+    init_secret_key = sys.argv[2]
+    key_dict = (init_access_key, init_secret_key)
+    navi_database = r"navi.db"
+    init_conn = new_db_connection(navi_database)
+    with init_conn:
+        sql = '''INSERT or IGNORE into keys(access_key, secret_key) VALUES(?,?)'''
+        cur = init_conn.cursor()
+        cur.execute(sql, key_dict)
     grab_scans()
-    app.run(host="0.0.0.0", port=5004)
-    # main()
-    # download_data('d9c9f3e1-273b-412a-94f0-9ada8f44d89a')
-    # sql_explorer()
-    #scan_report()
+    run_app()
+
