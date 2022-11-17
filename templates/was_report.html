@@ -80,7 +80,7 @@ border-radius: 3px;
 display: none;
 }
 .critical {
-background-color: #f63442;
+background-color: #91243E;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -88,7 +88,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .high {
-background-color: #ff9757;
+background-color: #DD4B50;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -96,7 +96,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .medium {
-background-color: #f9c23b;
+background-color: #F18C43;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -104,7 +104,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .low {
-background-color: #7bb147;
+background-color: #F8C851;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -112,7 +112,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .info {
-background-color: #0070b6;
+background-color: #67ACE1;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -228,17 +228,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <td>Scan UUID</td>
             <td>{{scan_uuid}}</td>
         </tr>
-        <tr>
-            <td>Requests Made</td>
-            <td>{{requests_made}}</td>
-        <tr>
-            <td>Pages Crawled</td>
-            <td>{{pages_crawled}}</td>
-        </tr>
-        <tr>
-            <td>Pages Audited</td>
-            <td>{{pages_audited}}</td>
-        </tr>
+
     </table>
 </div>
 
@@ -260,52 +250,6 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     </table>
 </div>
 
-<!-- OWASP 2017 -->
-<div class=bar_chart_fl_2>
-    <table class=table1 width=50%>
-         <tr>
-            <td colspan="10"><h2 align="center">OWASP 2017</h2></td>
-         </tr>
-        <tr>
-            {%for k, v in owasp_dict.items()%}
-            <th align="center">{{k}}</th>
-
-             {% endfor %}
-        </tr>
-        <tr>
-            {%for k, v in owasp_dict.items()%}
-
-            <td align=center>{{v}}</td>
-             {% endfor %}
-        </tr>
-
-    </table>
-
-</div>
-
-<!-- Messages -->
-<div class=bar_chart_fl_2>
-    <table width=100%>
-        <tr>
-            <td><h2>Messages</h2></td>
-    </table>
-
-    <table class=table1 width=100%>
-        {%for mesg in notes%}
-            {%for k, v in mesg.items()%}
-            <tr>
-                <th>{{k}}</th>
-                <td>{{v}}</td>
-            </tr>
-
-                {% endfor %}
-            <tr>
-                <th> &nbsp;</th>
-                <td> &nbsp;</td>
-            </tr>
-        {% endfor %}
-    </table>
-</div>
 
 <!-- Site Map -->
 <div class=bar_chart_fl_2>
@@ -338,7 +282,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <th width=15% align=center>Plugin ID</th>
             <th width=40% align=center>Plugin Name</th>
             <th width=25% align=center>Family</th>
-             <th width=10% align=center>OWASP 2017</th>
+             <th width=10% align=center>OWASP 2021</th>
             <th align=center>Vuln Count</th>
         </tr>
         {%for item in critical_summary%}
@@ -362,7 +306,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <th width=15% align=center>Plugin ID</th>
             <th width=40% align=center>Plugin Name</th>
             <th width=25% align=center>Family</th>
-             <th width=10% align=center>OWASP 2017</th>
+             <th width=10% align=center>OWASP 2021</th>
             <th align=center>Vuln Count</th>
         </tr>
         {%for item in high_summary%}
@@ -387,7 +331,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <th width=15% align=center>Plugin ID</th>
             <th width=40% align=center>Plugin Name</th>
             <th width=25% align=center>Family</th>
-         <th width=10% align=center>OWASP 2017</th>
+         <th width=10% align=center>OWASP 2021</th>
             <th align=center>Vuln Count</th>
         </tr>
         {%for item in medium_summary%}
@@ -411,7 +355,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <th width=15% align=center>Plugin ID</th>
             <th width=40% align=center>Plugin Name</th>
             <th width=25% align=center>Family</th>
-             <th width=10% align=center>OWASP 2017</th>
+             <th width=10% align=center>OWASP 2021</th>
             <th align=center>Vuln Count</th>
         </tr>
         {%for item in low_summary%}

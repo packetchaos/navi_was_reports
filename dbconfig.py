@@ -51,7 +51,6 @@ def create_apps_table():
                             uuid text PRIMARY KEY, 
                             target text, 
                             scan_completed_time text,
-                            pages_audited text,
                             pages_crawled text,
                             requests_made text, 
                             critical_count text,
@@ -61,7 +60,8 @@ def create_apps_table():
                             info_count text,
                             owasp text,
                             tech_list text,
-                            config_id text
+                            config_id text,
+                            notes text
                             );"""
     app_conn.execute('pragma journal_mode=wal;')
 
@@ -74,7 +74,6 @@ def insert_apps(conn, apps):
              uuid, 
              target, 
              scan_completed_time,
-             pages_audited,
              pages_crawled,
              requests_made, 
              critical_count,
@@ -84,8 +83,65 @@ def insert_apps(conn, apps):
              info_count,
              owasp,
              tech_list,
-             config_id)
-     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
+             config_id,
+             notes)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
     cur.execute('pragma journal_mode=wal;')
     cur.execute(sql, apps)
+
+
+def create_plugins_table():
+    database = r"navi.db"
+    app_conn = new_db_connection(database)
+    create_plugins = """CREATE TABLE IF NOT EXISTS plugins (
+                            scan_uuid text,
+                            name text,
+                            cves text,
+                            description text, 
+                            family text, 
+                            output text,
+                            owasp text,
+                            payload text,
+                            plugin_id text,
+                            plugin_mod_date text,
+                            plugin_pub_date text,
+                            proof text,
+                            request_headers text,
+                            response_headers text,
+                            risk_factor text,
+                            solution text,
+                            url text,
+                            xrefs text,
+                            see_also text
+                            );"""
+    app_conn.execute('pragma journal_mode=wal;')
+
+    create_table(app_conn, create_plugins)
+
+
+def insert_plugins(conn, plugins):
+    sql2 = '''INSERT or IGNORE into plugins(
+            scan_uuid,
+            name,
+            cves,
+            description, 
+            family, 
+            output,
+            owasp,
+            payload,
+            plugin_id,
+            plugin_mod_date,
+            plugin_pub_date,
+            proof,
+            request_headers,
+            response_headers,
+            risk_factor,
+            solution,
+            url,
+            xrefs,
+            see_also)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
+    cur2 = conn.cursor()
+    cur2.execute('pragma journal_mode=wal;')
+    cur2.execute(sql2, plugins)

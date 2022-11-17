@@ -78,7 +78,7 @@ border-radius: 3px;
 display: none;
 }
 .critical {
-background-color: #f63442;
+background-color: #91243E;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -86,7 +86,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .high {
-background-color: #ff9757;
+background-color: #DD4B50;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -94,7 +94,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .medium {
-background-color: #f9c23b;
+background-color: #F18C43;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -102,7 +102,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .low {
-background-color: #7bb147;
+background-color: #F8C851;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -110,7 +110,7 @@ border-radius: 3px;
 padding: 2px;
 }
 .info {
-background-color: #0070b6;
+background-color: #67ACE1;
 color: white;
 text-align: center;
 border: 2px solid #708090;
@@ -203,33 +203,19 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     </table>
 </div>
 
-<!--Scan Job Totals
+<!--Scan Job Totals -->
 <div class=bar_chart_fl>
     <table width=100%>
         <tr>
             <td><h2>Scan Job Totals</h2></td>
     </table>
-
-    <table class=table1 width=100%>
-        <tr>
-            <td>Requests Made</td>
-            <td>{{request_total}}</td>
-        <tr>
-            <td>Pages Crawled</td>
-            <td>{{crawled_total}}</td>
-        </tr>
-        <tr>
-            <td>Pages Audited</td>
-            <td>{{audit_total}}</td>
-        </tr>
-    </table>
-</div>-->
+</div>
 
 <!--OWASP Totals -->
 <div class=bar_chart_fl>
     <table width=100%>
         <tr>
-            <td><h2 align="center">OWASP 2017 Totals</h2></td></tr>
+            <td><h2 align="center">OWASP 2021 Totals</h2></td></tr>
     </table>
     <table class=table1 width=100%>
         <tr>
@@ -257,7 +243,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
         <tr>
             <td>
                 {%for item in technology_list%}
-                &bull;{{item}}&nbsp;&nbsp; {% endfor %}</td>
+                {{item}} {% endfor %}</td>
         </tr>
 
     </table>
@@ -276,7 +262,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 <div class=bar_chart_fl>
     <table class=table1 width=700px>
          <tr>
-             <th width=50%>Web App Scan Completed - <a href="/report?scan_uuid={{k}}">{{v[12]}}</a></th>
+             <th width=50%>Web App Scan Completed - <a href="/report?scan_uuid={{v[12]}}">{{k}}</a></th>
             <th width=10% align=center >Critical</th>
             <th width=10% align=center>High</th>
              <th width=10% align=center>Medium</th>
@@ -285,7 +271,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
         </tr>
 
         <tr>
-            <td width=50%><a href="/?config_id={{v[13]}}">{{v[9]}}</a></td>
+            <td width=50%><a href="/?config_id={{v[13]}}">{{v[13]}}</a></td>
             <td width=10% class=critical align=center>{{v[0]}}</td>
             <td width=10% class=high align=center>{{v[1]}}</td>
             <td width=10% class=medium align=center>{{v[2]}}</td>
@@ -296,7 +282,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <td colspan="1">
                 <table class=table1 width=100%>
                     <tr><th>Technologies Found</th></tr>
-                    {%for item in v[11]%}
+                    {%for item in v[10]%}
                     <tr>
                         <td>{{item}}</td>
                     </tr>
@@ -306,14 +292,14 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <td colspan="5">
                 <table width="350px">
                     <tr>
-                    {%for key, value in v[10].items()%}
+                        {%for key, value in v[9].items()%}
                         <th>{{key}}</th>
-                    {% endfor %}
+                        {% endfor %}
                     </tr>
                     <tr>
-                    {%for key, value in v[10].items()%}
+                        {%for key, value in v[9].items()%}
                         <td>{{value}}</td>
-                    {% endfor %}
+                        {% endfor %}
                     </tr>
                 </table>
             </td>
