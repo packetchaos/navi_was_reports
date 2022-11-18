@@ -61,7 +61,8 @@ def create_apps_table():
                             owasp text,
                             tech_list text,
                             config_id text,
-                            notes text
+                            notes text,
+                            asset_uuid text
                             );"""
     app_conn.execute('pragma journal_mode=wal;')
 
@@ -84,8 +85,9 @@ def insert_apps(conn, apps):
              owasp,
              tech_list,
              config_id,
-             notes)
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
+             notes,
+             asset_uuid)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
     cur.execute('pragma journal_mode=wal;')
     cur.execute(sql, apps)

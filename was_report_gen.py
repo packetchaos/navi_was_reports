@@ -61,6 +61,17 @@ def plugin_parser(plugin_output):
     return tech_list
 
 
+def vuln_counter(plugin_id, scan_uuid):
+    database = r"navi.db"
+    conn = new_db_connection(database)
+    with conn:
+        cur = conn.cursor()
+        cur.execute("SELECT count(*) from plugins where plugin_id =='{}' and scan_uuid=='{}';".format(plugin_id, scan_uuid))
+
+        plugin_data = cur.fetchall()
+
+        return plugin_data[0][0]
+
 def get_was_stats(scan_id):
     params = {"limit": "200", "offset": "0"}
     was_data = request_data("POST", "/was/v2/scans/{}/vulnerabilities/search".format(scan_id), params=params)
@@ -92,7 +103,7 @@ def get_was_stats(scan_id):
             return stat_dict
 
 
-def download_data(uuid):
+def download_data(uuid, asset):
     database = r"navi.db"
     app_conn = new_db_connection(database)
     app_conn.execute('pragma journal_mode=wal;')
@@ -243,6 +254,7 @@ def download_data(uuid):
             apps_table_list.append(str(tech_list))
             apps_table_list.append(config_id)
             apps_table_list.append(str(notes))
+            apps_table_list.append(str(asset))
 
             insert_apps(app_conn, apps_table_list)
 
@@ -266,7 +278,8 @@ def grab_scans():
             status = scanids['last_scan']['status']
             # Ignore all scans that have not completed
             if status == 'completed':
-                download_data(was_scan_id)
+                asset_uuid = scanids['last_scan']['asset_id']
+                download_data(was_scan_id, asset_uuid)
 
     return
 
@@ -298,6 +311,7 @@ def scan_report():
         medium = []
         low = []
         info = []
+        info2 = []
 
         scan_name = data2[0][0]
         scan_completed_time = data2[0][3]
@@ -311,6 +325,7 @@ def scan_report():
         plugin_info_list = {}
 
         for finding in plugin_data:
+
             owasp_dict = []
             plugin_id = finding[8]
 
@@ -335,17 +350,18 @@ def scan_report():
             solution = finding[15]
             owasp_list = finding[6]
             risk = finding[14]
+            proof = finding[11]
 
             for year in eval(owasp_list):
                 if year['year'] == '2021':
                     owasp_dict.append(year['category'])
 
-            vuln_count = occurances(plugin_id, plugin_list)
+            vuln_count = vuln_counter(plugin_id, scan_uuid) #occurances(plugin_id, plugin_list)
 
             vuln_list = [risk, plugin_id, plugin_name, family, owasp_dict, vuln_count]
 
             if plugin_id not in plugin_info_list:
-                plugin_info_list[plugin_id] = [risk, family, description, see_also, solution]#, instance_dict[plugin_id]]
+                plugin_info_list[plugin_id] = [risk, family, description, see_also, solution, instance_dict[plugin_id], proof]
 
             if risk == 'high':
                 high.append(plugin_id)
@@ -445,7 +461,6 @@ def grab_was_consolidated_data(config_id):
             scan_completed_time_raw = apps[12]
             scan_completed_time_formatted = dateutil.parser.parse(scan_completed_time_raw)
             scan_completed_time = scan_completed_time_formatted.strftime("%A, %b %-d %Y")
-
 
             # Totals
             critical_total = critical_total + int(apps[0])
