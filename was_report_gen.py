@@ -72,6 +72,7 @@ def vuln_counter(plugin_id, scan_uuid):
 
         return plugin_data[0][0]
 
+
 def get_was_stats(scan_id):
     params = {"limit": "200", "offset": "0"}
     was_data = request_data("POST", "/was/v2/scans/{}/vulnerabilities/search".format(scan_id), params=params)
@@ -271,14 +272,15 @@ def grab_scans():
     create_plugins_table()
 
     data = request_data('POST', '/was/v2/configs/search?limit=200&offset=0')
+    for configs in data['items']:
+        config_id = configs['config_id']
+        was_config_data = request_data("POST", "/was/v2/configs/{}/scans/search".format(config_id))
+        # Ignore all scans that have not completed
 
-    for scanids in data['items']:
-        if scanids['last_scan']:
-            was_scan_id = scanids['last_scan']['scan_id']
-            status = scanids['last_scan']['status']
-            # Ignore all scans that have not completed
-            if status == 'completed':
-                asset_uuid = scanids['last_scan']['asset_id']
+        for scanids in was_config_data['items']:
+            if scanids['status'] == 'completed':
+                asset_uuid = scanids['asset_id']
+                was_scan_id = scanids['scan_id']
                 download_data(was_scan_id, asset_uuid)
 
     return
@@ -435,7 +437,6 @@ def grab_was_consolidated_data(config_id):
     with conn:
         cur = conn.cursor()
         if config_id:
-            print("hello")
             cur.execute("SELECT critical_count, high_count, medium_count, low_count, info_count,"
                         "pages_crawled, requests_made, target, uuid, name, owasp, tech_list, scan_completed_time, config_id from apps where config_id='{}';".format(config_id))
         else:
@@ -486,7 +487,7 @@ def grab_was_consolidated_data(config_id):
             tech_dictionary = apps[11]
             scan_config = apps[13]
 
-            app_data[apps[9]] = [critical, high, medium, low, info,
+            app_data[apps[8]] = [critical, high, medium, low, info,
                                  pages_crawled, requests_made, target, scan_name, eval(owasp_dictionary),
                                  eval(tech_dictionary), scan_completed_time, scan_uuid, scan_config]
 

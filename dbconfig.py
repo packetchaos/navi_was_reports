@@ -48,7 +48,7 @@ def create_apps_table():
     app_conn = new_db_connection(database)
     create_apps = """CREATE TABLE IF NOT EXISTS apps (
                             name text,
-                            uuid text PRIMARY KEY, 
+                            uuid text, 
                             target text, 
                             scan_completed_time text,
                             pages_crawled text,
