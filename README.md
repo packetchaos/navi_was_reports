@@ -24,7 +24,7 @@ Follow the Docker Documentation for your Chosen OS:
 ### Run the Docker Container.
 Replace \<access Key> and \<secret key> with your Tenable.io API keys.
 
-    docker run -it -e "access_key=<access key>" -e "secret_key=<secret key>" -p 5004:5004 silentninja/navi:was
+    docker run -it -e "access_key=<access key>" -e "secret_key=<secret key>" -e "<days to limit>" -p 5004:5004 silentninja/navi:was
 
 ## Run Using Python
 ### Install All of the required packages and libraries
@@ -51,5 +51,4 @@ Follow the Python Documentation for your chosen OS:
     git clone https://github.com/packetchaos/navi_was_reports.git
 
 ### Run the Script
-    python3 ./was_report_gen.py <access_key> <secret_key>
-
+    python3 ./was_report_gen.py <access_key> <secret_key> <days_to_limit>

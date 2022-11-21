@@ -225,8 +225,12 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             <td>{{scan_completed_time}}</td>
         </tr>
         <tr>
-            <td>Scan UUID</td>
-            <td>{{scan_uuid}}</td>
+            <td>Scann UUID</td>
+            <td><a href="https://cloud.tenable.com/tio/app.html#/webapp-scanning/scans/folders/2/scan-details/{{scan_uuid}}/vulnerabilities" target="_blank">{{scan_uuid}}</a></td>
+        </tr>
+        <tr>
+            <td>Asset UUID</td>
+            <td><a href="https://cloud.tenable.com/tio/app.html#/webapp-scanning/dashboard/vulnerabilities/applications/application-details/{{asset_uuid}}" target="_blank">{{asset_uuid}}</a></td>
         </tr>
 
     </table>
@@ -255,12 +259,27 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
 <div class=bar_chart_fl_2>
     <table width=100%>
         <tr>
-            <td><h2>Site Map Information</h2></td>
+            <td><h1>Site Map Information</h1></td>
     </table>
 
     <table class=table1 width=100%>
         <tr>
             <th><pre>{{sitemap}}</pre></th>
+
+        </tr>
+
+    </table>
+</div>
+
+<!-- Scan Stats -->
+<div class=page_heading>
+    <h1>Scan Statistics</h1>
+</div>
+<div class=bar_chart_fl_2>
+
+    <table class=table1 width=100%>
+        <tr>
+            <th><pre>{{scan_stats}}</pre></th>
 
         </tr>
 
@@ -400,7 +419,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
         <table width=900px>
             <tr>
                 <td align=left width=80px><b>Plugin ID</b></td>
-                <td width=80px align=center><b><a href='#{{k}}'>{{k}}</a></b></td>
+                <td width=80px align=center><b><a href='https://cloud.tenable.com/tio/app.html#/webapp-scanning/dashboard/vulnerabilities/plugins/plugin-details/{{k}}/overview' target="_blank">{{k}}</a></b></td>
                 <td width=100px align=center class={{v[0]}}>{{v[0]}}</td><td width=20px>&nbsp;</td>
                 <td>{{v[1]}}</td>
             </tr>
@@ -419,7 +438,7 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
         <table width=900px>
             {% for uri in v[5]%}
             <tr>
-                <td><a href='#{{uri}}'>{{uri}}</a></td>
+                <td><a href='{{uri}}'>{{uri}}</a></td>
             </tr>
             {% endfor %}
         </table>
@@ -448,9 +467,11 @@ box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
                 <tr>
                     <td><b>See Also</b></td>
                 </tr>
+                {% for url in v[3]%}
                 <tr>
-                    <td>{{v[3]}}</td>
+                    <td><a href='{{url}}'>{{url}}</a></td>
                 </tr>
+                {% endfor %}
         </table>
     </div>
 {% endfor %}

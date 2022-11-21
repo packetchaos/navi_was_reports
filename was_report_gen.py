@@ -2,8 +2,9 @@ from flask import Flask, render_template, request
 from dbconfig import insert_apps, create_apps_table, new_db_connection, drop_tables, create_keys_table, create_plugins_table, insert_plugins
 import requests
 import dateutil.parser
+import datetime
+import time
 import sys
-
 app = Flask(__name__)
 
 
@@ -73,37 +74,6 @@ def vuln_counter(plugin_id, scan_uuid):
         return plugin_data[0][0]
 
 
-def get_was_stats(scan_id):
-    params = {"limit": "200", "offset": "0"}
-    was_data = request_data("POST", "/was/v2/scans/{}/vulnerabilities/search".format(scan_id), params=params)
-    stat_dict = {}
-
-    for finding in was_data['items']:
-        if str(finding['plugin_id']) == '98000':
-
-            scan_meta_data = finding['details']['output']
-
-            new_data = str(scan_meta_data).split()
-
-            stat_dict['eng_version'] = "0"#new_data[2]
-            stat_dict['start_time'] = "0"#"{} {} {}".format(new_data[11], new_data[12],new_data[13])
-            stat_dict['duration'] = "0"#new_data[15]
-
-            stat_dict['requests_made'] = "0"#new_data[17]
-            stat_dict['crawler_requests'] = "0"#new_data[20]
-            stat_dict['requests_per_sec'] = "0"#new_data[22]
-            stat_dict['mean_response_time'] = "0"#new_data[26]
-
-            stat_dict['data_target'] = "0"#"{} {}".format(new_data[33], new_data[34])
-            stat_dict['target_to_data'] = "0"#"{} {}".format(new_data[39], new_data[40])
-
-            stat_dict['network_timeouts'] = "0"#new_data[45]
-            stat_dict['browser_timeouts'] = "0"#new_data[48]
-            stat_dict['browser_respawns'] = "0"#new_data[51]
-
-            return stat_dict
-
-
 def download_data(uuid, asset):
     database = r"navi.db"
     app_conn = new_db_connection(database)
@@ -140,7 +110,7 @@ def download_data(uuid, asset):
             medium_summary = []
             low_summary = []
             info_summary = []
-            tech_list = ['Nothing Found']
+            tech_list = []
             owasp_list = []
             owasp_dict = {}
             try:
@@ -262,7 +232,7 @@ def download_data(uuid, asset):
     return
 
 
-def grab_scans():
+def grab_scans(days):
     database = r"navi.db"
     app_conn = new_db_connection(database)
     app_conn.execute('pragma journal_mode=wal;')
@@ -278,10 +248,18 @@ def grab_scans():
         # Ignore all scans that have not completed
 
         for scanids in was_config_data['items']:
+            day = 86400
+            new_limit = day * int(days)
+            day_limit = time.time() - new_limit
+
             if scanids['status'] == 'completed':
                 asset_uuid = scanids['asset_id']
                 was_scan_id = scanids['scan_id']
-                download_data(was_scan_id, asset_uuid)
+                finalized_at = scanids['finalized_at']
+                epoch = datetime.datetime.strptime(finalized_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+
+                if epoch >= day_limit:
+                    download_data(was_scan_id, asset_uuid)
 
     return
 
@@ -316,6 +294,7 @@ def scan_report():
         info2 = []
 
         scan_name = data2[0][0]
+        asset_uuid = data2[0][15]
         scan_completed_time = data2[0][3]
         requests_made = data2[0][5]
         pages_crawled = data2[0][4]
@@ -345,14 +324,18 @@ def scan_report():
             if str(plugin_id) == '98009':
                 sitemap = finding[5]
 
+            if str(plugin_id) == '98000':
+                scan_stats = finding[5]
+
             plugin_name = finding[1]
             family = finding[4]
             description = finding[3]
-            see_also = finding[18]
+            see_also = eval(finding[18])
             solution = finding[15]
             owasp_list = finding[6]
             risk = finding[14]
             proof = finding[11]
+
 
             for year in eval(owasp_list):
                 if year['year'] == '2021':
@@ -392,8 +375,8 @@ def scan_report():
                                name=scan_name, scan_uuid=scan_uuid, info=len(info), high_summary=high_summary,
                                medium_summary=medium_summary, low_summary=low_summary, info_summary=info_summary,
                                critical_summary=critical_summary, tech_list=tech_list, notes=notes,
-                               owasp_dict=owasp_dict,
-                               sitemap=sitemap[:-116], plugin_info_list=plugin_info_list)
+                               owasp_dict=owasp_dict, scan_stats=scan_stats,
+                               sitemap=sitemap[:-116], plugin_info_list=plugin_info_list, asset_uuid=asset_uuid)
 
 
 @app.route('/')
@@ -427,7 +410,7 @@ def consolidated():
                            critical_total=critical_total,
                            high_total=high_total, medium_total=medium_total, low_total=low_total,
                            request_total=request_total, info_total=info_total, app_data=app_data, value_dict=value_dict,
-                           technology_list=technology_list)
+                           technology_list=set(technology_list))
 
 
 def grab_was_consolidated_data(config_id):
@@ -528,6 +511,10 @@ if __name__ == '__main__':
     create_keys_table()
     init_access_key = sys.argv[1]
     init_secret_key = sys.argv[2]
+    try:
+        limit_days = int(sys.argv[3])
+    except:
+        limit_days = 60
     key_dict = (init_access_key, init_secret_key)
     navi_database = r"navi.db"
     init_conn = new_db_connection(navi_database)
@@ -537,6 +524,6 @@ if __name__ == '__main__':
         cur.execute(sql, key_dict)
         drop_tables(init_conn, 'apps')
         drop_tables(init_conn, 'plugins')
-    grab_scans()
+    grab_scans(limit_days)
     run_app()
 
