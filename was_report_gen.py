@@ -242,24 +242,41 @@ def grab_scans(days):
     create_plugins_table()
 
     data = request_data('POST', '/was/v2/configs/search?limit=200&offset=0')
+
     for configs in data['items']:
         config_id = configs['config_id']
         was_config_data = request_data("POST", "/was/v2/configs/{}/scans/search".format(config_id))
         # Ignore all scans that have not completed
 
         for scanids in was_config_data['items']:
+
             day = 86400
             new_limit = day * int(days)
             day_limit = time.time() - new_limit
 
-            if scanids['status'] == 'completed':
-                asset_uuid = scanids['asset_id']
-                was_scan_id = scanids['scan_id']
-                finalized_at = scanids['finalized_at']
-                epoch = datetime.datetime.strptime(finalized_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+            if scanids['status'] == 'completed' and scanids['template_name'] == 'scan':
+                try:
+                    asset_uuid = scanids['asset_id']
+                except KeyError:
+                    asset_uuid = "NO ID Found"
+                try:
+                    uri = scanids['application_uri']
+                except KeyError:
+                    uri = "NOPE"
 
-                if epoch >= day_limit:
-                    download_data(was_scan_id, asset_uuid)
+                if uri != "NOPE":
+                    was_scan_id = scanids['scan_id']
+                    finalized_at = scanids['finalized_at']
+                    try:
+                        epoch = datetime.datetime.strptime(finalized_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+
+                        if epoch >= day_limit:
+
+                            download_data(was_scan_id, asset_uuid)
+                    except TypeError:
+                        pass
+            else:
+                pass
 
     return
 
@@ -387,19 +404,23 @@ def consolidated():
     data = request_data('POST', '/was/v2/configs/search?limit=200&offset=0')
     for scan_data in data['items']:
         if scan_data['last_scan']:
-            was_scan_id = scan_data['last_scan']['scan_id']
-            status = scan_data['last_scan']['status']
-            # Ignore all scans that have not completed
-            if status == 'completed':
-                scan_summary = []
-                summary_start = scan_data['last_scan']['started_at']
-                finish = scan_data['last_scan']['finalized_at']
-                application = scan_data['last_scan']['application_uri']
-                scan_summary.append(application)
-                scan_summary.append(was_scan_id)
-                scan_summary.append(summary_start)
-                scan_summary.append(finish)
-                scan_summaries.append(scan_summary)
+            try:
+                was_scan_id = scan_data['last_scan']['scan_id']
+                status = scan_data['last_scan']['status']
+                # Ignore all scans that have not completed
+                if status == 'completed':
+                    scan_summary = []
+                    summary_start = scan_data['last_scan']['started_at']
+                    finish = scan_data['last_scan']['finalized_at']
+                    application = scan_data['last_scan']['application_uri']
+                    scan_summary.append(application)
+                    scan_summary.append(was_scan_id)
+                    scan_summary.append(summary_start)
+                    scan_summary.append(finish)
+                    scan_summaries.append(scan_summary)
+            except KeyError:
+                # If there is a Key error it is due to a Parent record
+                pass
 
     # grab data from the Database
     critical_total, high_total, medium_total, low_total, info_total, crawled_total, request_total, \
