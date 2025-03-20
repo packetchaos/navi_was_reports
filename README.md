@@ -19,16 +19,16 @@ Follow the Docker Documentation for your Chosen OS:
     https://docs.docker.com/get-docker/
 
 ### Pull the Docker container
-    docker pull silentninja/navi:was
+    docker pull packetchaos/navi_was_reports
 
 ### Run the Docker Container.
 Replace \<access Key> and \<secret key> with your Tenable.io API keys.
 
-    docker run -it -e "access_key=<access key>" -e "secret_key=<secret key>" -e "<days to limit>" -p 5004:5004 silentninja/navi:was
+    docker run -it -e "access_key=<access key>" -e "secret_key=<secret key>" -e "<days to limit>" -p 5004:5004 packetchaos/navi_was_reporter
 
 ## Run Using Python
 ### Install All of the required packages and libraries
-    Python 3.6+
+    Python 3.9+
     Git
     python requests lib
     python flask lib
