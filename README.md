@@ -46,6 +46,7 @@ Follow the Python Documentation for your chosen OS:
 ### Install Python Libraries
     pip3 install requests
     pip3 install flask
+    pip3 install dateutil
 
 ### Clone the repository
     git clone https://github.com/packetchaos/navi_was_reports.git
